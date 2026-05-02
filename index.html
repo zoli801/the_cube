@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>3D Кубик Рубика</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="./styles.css" />
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "./vendor/three.module.js"
+        }
+      }
+    </script>
+    <script src="./vendor/cube.js"></script>
+  </head>
+  <body>
+    <main class="app-shell">
+      <canvas id="cubeCanvas" aria-label="3D кубик Рубика"></canvas>
+
+      <section class="top-hud" aria-label="Статистика партии">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true"></span>
+          <div>
+            <h1>Кубик Рубика</h1>
+            <p id="gameStatus">Новый расклад готовится</p>
+          </div>
+        </div>
+
+        <div class="stats">
+          <div class="stat">
+            <span>Ходы</span>
+            <strong id="moveCount">0</strong>
+          </div>
+          <div class="stat">
+            <span>Минимум</span>
+            <strong id="bestCount">...</strong>
+          </div>
+          <div class="stat wide">
+            <span>Расклад</span>
+            <strong id="scrambleText">...</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="controls" aria-label="Управление кубиком">
+        <div class="move-pad" id="movePad">
+          <button class="turn-btn" data-face="U" type="button">U</button>
+          <button class="turn-btn" data-face="R" type="button">R</button>
+          <button class="turn-btn" data-face="F" type="button">F</button>
+          <button class="turn-btn" data-face="D" type="button">D</button>
+          <button class="turn-btn" data-face="L" type="button">L</button>
+          <button class="turn-btn" data-face="B" type="button">B</button>
+        </div>
+
+        <div class="turn-mode" role="group" aria-label="Тип поворота">
+          <button class="mode-btn active" data-suffix="" type="button">90</button>
+          <button class="mode-btn" data-suffix="'" type="button">90'</button>
+          <button class="mode-btn" data-suffix="2" type="button">180</button>
+        </div>
+
+        <div class="action-bar">
+          <button id="resetBtn" class="action-btn" type="button">Сбросить</button>
+          <button id="newBtn" class="action-btn primary" type="button">Новый</button>
+          <button id="solveBtn" class="action-btn" type="button">Собрать</button>
+          <button id="paletteBtn" class="action-btn" type="button">Палитра</button>
+        </div>
+      </section>
+
+      <aside class="toast" id="toast" aria-live="polite"></aside>
+
+      <section class="victory" id="victoryPanel" aria-live="polite">
+        <div class="victory-copy">
+          <span class="victory-kicker">Готово</span>
+          <h2>Куб собран</h2>
+          <p id="victoryStats">Ходов: 0 · минимум: ...</p>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>
