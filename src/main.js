@@ -127,10 +127,10 @@ let busy = false;
 let autoSolving = false;
 let victoryShown = false;
 let toastTimer = null;
-let solveRequestId = 0;
 let confetti = [];
 
-const solverWorker = new Worker(new URL("./solverWorker.js", import.meta.url));
+const solverWorker = createSolverWorker();
+let solveRequestId = 0;
 const pendingSolves = new Map();
 
 initScene();
@@ -252,22 +252,33 @@ function initUi() {
     }
   });
 
-  solverWorker.addEventListener("message", (event) => {
-    const { id, ok, error, solution, moves, elapsed } = event.data;
-    const pending = pendingSolves.get(id);
+  if (solverWorker) {
+    solverWorker.addEventListener("message", (event) => {
+      const { id, ok, error, solution, moves, elapsed } = event.data;
+      const pending = pendingSolves.get(id);
 
-    if (!pending) {
-      return;
-    }
+      if (!pending) {
+        return;
+      }
 
-    pendingSolves.delete(id);
+      pendingSolves.delete(id);
 
-    if (ok) {
-      pending.resolve({ solution, moves, elapsed });
-    } else {
-      pending.reject(new Error(error));
-    }
-  });
+      if (ok) {
+        pending.resolve({ solution, moves, elapsed });
+      } else {
+        pending.reject(new Error(error));
+      }
+    });
+  }
+}
+
+function createSolverWorker() {
+  try {
+    return new Worker("./src/solverWorker.js");
+  } catch (error) {
+    console.warn("Solver worker is unavailable; auto-solve will use a simple fallback.", error);
+    return null;
+  }
 }
 
 function createMaterials() {
@@ -728,13 +739,23 @@ function updateHud() {
 }
 
 function requestSolve(algorithm, options = {}) {
-  solveRequestId += 1;
-  const id = solveRequestId;
   const {
     refine = false,
     upperBoundSolution = "",
     probeLimit = 0
   } = options;
+
+  if (!solverWorker) {
+    const solution = upperBoundSolution || CubeModel.inverse(algorithm || "");
+    return Promise.resolve({
+      solution,
+      moves: parseSolution(solution).length,
+      elapsed: 0
+    });
+  }
+
+  solveRequestId += 1;
+  const id = solveRequestId;
 
   return new Promise((resolve, reject) => {
     pendingSolves.set(id, { resolve, reject });
