@@ -119,7 +119,7 @@ button {
   border-radius: 8px;
   display: grid;
   gap: 1px;
-  grid-template-columns: 88px 112px minmax(190px, 380px);
+  grid-template-columns: 88px minmax(260px, 500px);
   overflow: hidden;
   pointer-events: auto;
 }
@@ -320,7 +320,7 @@ body.victory-mode #cubeCanvas {
   }
 
   .stats {
-    grid-template-columns: 86px 112px minmax(0, 1fr);
+    grid-template-columns: 86px minmax(0, 1fr);
   }
 
   .controls {

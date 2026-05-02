@@ -5,7 +5,6 @@ const CubeModel = window.Cube;
 
 const canvas = document.querySelector("#cubeCanvas");
 const moveCountEl = document.querySelector("#moveCount");
-const bestCountEl = document.querySelector("#bestCount");
 const scrambleTextEl = document.querySelector("#scrambleText");
 const gameStatusEl = document.querySelector("#gameStatus");
 const toastEl = document.querySelector("#toast");
@@ -25,8 +24,8 @@ const STICKER_OFFSET = CUBIE_SIZE / 2 + 0.006;
 const SPACING = 1.05;
 const MOVE_DURATION = 250;
 const FACE_KEYS = ["U", "R", "F", "D", "L", "B"];
-const SCRAMBLE_MIN = 11;
-const SCRAMBLE_VARIANCE = 2;
+const SCRAMBLE_MIN = 24;
+const SCRAMBLE_VARIANCE = 9;
 
 const AXIS_BY_FACE = {
   U: "y",
@@ -120,7 +119,6 @@ let logicalCube = new CubeModel();
 let scrambleMoves = [];
 let currentAlgMoves = [];
 let playerMoveCount = 0;
-let bestScrambleMoves = null;
 let bestScrambleSolution = "";
 let selectedSuffix = "";
 let moveQueue = [];
@@ -130,7 +128,6 @@ let autoSolving = false;
 let victoryShown = false;
 let toastTimer = null;
 let solveRequestId = 0;
-let gameId = 0;
 let confetti = [];
 
 const solverWorker = new Worker(new URL("./solverWorker.js", import.meta.url));
@@ -355,12 +352,9 @@ async function startNewGame() {
   if (busy) return;
 
   busy = true;
-  gameId += 1;
-  const localGameId = gameId;
   clearVictory();
   setButtonsDisabled(true);
-  bestCountEl.textContent = "...";
-  gameStatusEl.textContent = "Генерирую новый расклад";
+  gameStatusEl.textContent = "Генерирую сложный расклад";
 
   buildCube();
   logicalCube = new CubeModel();
@@ -368,7 +362,6 @@ async function startNewGame() {
   currentAlgMoves = [...scrambleMoves];
   playerMoveCount = 0;
   bestScrambleSolution = CubeModel.inverse(scrambleMoves.join(" "));
-  bestScrambleMoves = parseSolution(bestScrambleSolution).length;
   logicalCube.move(scrambleMoves.join(" "));
 
   updateHud();
@@ -379,8 +372,7 @@ async function startNewGame() {
 
   setButtonsDisabled(false);
   busy = false;
-  gameStatusEl.textContent = "Можно собирать";
-  requestScrambleAnalysis(localGameId);
+  gameStatusEl.textContent = "Сложный расклад готов";
 }
 
 async function resetCurrentScramble() {
@@ -635,7 +627,7 @@ function triggerVictory() {
   victoryPanel.classList.add("visible");
   haloGroup.visible = true;
   gameStatusEl.textContent = "Куб собран";
-  victoryStatsEl.textContent = `Ходов: ${playerMoveCount} · минимум: ${bestScrambleMoves ?? "..."}`;
+  victoryStatsEl.textContent = `Ходов: ${playerMoveCount}`;
   spawnConfetti();
 }
 
@@ -731,34 +723,8 @@ function updateHalo(delta) {
 
 function updateHud() {
   moveCountEl.textContent = String(playerMoveCount);
-  bestCountEl.textContent = bestScrambleMoves === null ? "..." : String(bestScrambleMoves);
   scrambleTextEl.textContent = scrambleMoves.join(" ");
-}
-
-function requestScrambleAnalysis(localGameId) {
-  requestSolve(scrambleMoves.join(" "), {
-    refine: true,
-    upperBoundSolution: bestScrambleSolution,
-    probeLimit: Math.min(11, Math.max(0, bestScrambleMoves - 1))
-  })
-    .then((result) => {
-      if (localGameId !== gameId) {
-        return;
-      }
-
-      bestScrambleMoves = result.moves;
-      bestScrambleSolution = result.solution;
-      updateHud();
-      gameStatusEl.textContent = `Минимум найден за ${result.elapsed} мс`;
-    })
-    .catch(() => {
-      if (localGameId !== gameId) {
-        return;
-      }
-
-      bestCountEl.textContent = "?";
-      gameStatusEl.textContent = "Минимум не рассчитался";
-    });
+  scrambleTextEl.title = scrambleMoves.join(" ");
 }
 
 function requestSolve(algorithm, options = {}) {
